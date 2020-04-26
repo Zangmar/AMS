@@ -1,0 +1,20 @@
+<!--hr模板-->
+
+{% extends 'base_main.html' %}
+
+{% block sidebar %}
+<ul class="nav nav-sidebar">
+    <li><a href="{{ url_for('hr.main') }}"><span class="glyphicon glyphicon-th"></span>
+            <font size="3"> 人力资源管理主页</font>
+        </a></li>
+    {% block sidebar_main_li %}{% endblock %}
+</ul>
+<ul class="nav nav-sidebar">
+    <li><a href="{{ url_for('hr.apply') }}"><span class="glyphicon glyphicon-pencil"></span>
+            <font size="3">申请管理</font>
+        </a></li>
+    <li><a href="{{ url_for('hr.apply') }}" style="margin:0px 0px 0px 16px;">申请管理</a></li>
+    {% block sidebar_apply_li %}{% endblock %}
+</ul>
+
+{% endblock %}

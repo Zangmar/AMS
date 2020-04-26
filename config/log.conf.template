@@ -1,0 +1,48 @@
+[loggers]
+keys=root,{{ log_name }}
+
+[handlers]
+keys=console,file_INFO,file_DEBUG
+
+[formatters]
+keys=DEBUG_formatter,INFO_formatter
+
+[logger_root]
+level=DEBUG
+handlers=console,file_INFO,file_DEBUG
+
+
+
+[logger_{{ log_name }}]
+level={{ level }}
+handlers={{ log_handlers }}
+qualname={{ log_name }}
+propagate=0
+
+[handler_console]
+class=StreamHandler
+level=DEBUG
+formatter=INFO_formatter
+args=(sys.stdout,)
+
+[handler_file_INFO]
+class=handlers.TimedRotatingFileHandler
+level=INFO
+formatter=INFO_formatter
+args=("{{ info_log_path }}", "D",1,30)
+
+[handler_file_DEBUG]
+class=handlers.TimedRotatingFileHandler
+level=DEBUG
+formatter=DEBUG_formatter
+args=("{{ debug_log_path }}", "D",1,30)
+
+
+[formatter_DEBUG_formatter]
+format=%(asctime)s %(filename)s[line:%(lineno)d] %(thread)d %(threadName)s %(process)d %(levelname)s %(message)s
+datefmt=%Y/%m/%d %H:%M:%S
+
+[formatter_INFO_formatter]
+format=%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s
+datefmt=%Y/%m/%d %H:%M:%S
+

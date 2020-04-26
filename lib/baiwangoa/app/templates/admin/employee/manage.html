@@ -1,0 +1,204 @@
+{% extends 'admin/base.html' %}
+{% from "_macro.html" import pagination_nav %}
+
+
+{% block head %}
+<script src="{{ url_for('static', filename='admin/employee/post_form.js') }}"></script>
+<!-- 通用js -->
+<script src="{{ url_for('static', filename='utils.js') }}"></script>
+{% endblock %}
+
+{% block nav_li %}
+<li><a href="{{ url_for('admin.main') }}">管理员主页 --></a></li>
+<li class="active"><a href="#">员工列表</a></li>
+{% endblock %}
+
+{%block nav_son_form %}
+<form class="navbar-form navbar-left" action="{{ url_for('admin.employee') }}" method="GET">
+    <div class="input-group">
+        <div class="input-group-btn">
+            <select class="form-control" onclick="change_args_name()" id='filter_name'>
+                <option value="name">员工姓名</option>
+                <option value="phone">手机号</option>
+            </select>
+        </div>
+        <input type="text" name="name" id='filter_value' class="form-control" placeholder="搜索">
+    </div>
+    <button type="submit" class="btn btn-default">确定</button>
+</form>
+{% endblock %}
+
+{% block nav_son_button %}
+<button class="btn btn-default" data-toggle="modal" data-target="#addEmployeeModal">添加员工</button>
+{% endblock %}
+
+{% block content %}
+<!-- <div id="1" class="post-article"> -->
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>序号</th>
+            <th>姓名</th>
+            <th>入职时间</th>
+            <th>部门</th>
+            <th>手机号</th>
+            <th>是否在职</th>
+            <th>权限</th>
+            <th></th>
+            <!--edit-->
+            <th></th>
+            <!--delete-->
+        </tr>
+    </thead>
+    <tbody>
+        {% for employee in pagination.items %}
+        <tr>
+            <th scope="row">{{ (pagination.page-1)*10+loop.index }}</th>
+            <td>{{ employee.name }}</td>
+            <td>{{ employee.entry_time }}</td>
+            <td>{{ employee.department }}</td>
+            <td>{{ employee.phone }}</td>
+            {% if employee.is_work == '1' %}
+            <td>是</td>
+            {% else %}
+            <td>否</td>
+            {% endif %}
+            {% if employee.permission == 3 %}
+            <td>管理员</td>
+            {% elif employee.permission == 2 %}
+            <td>人力资源</td>
+            {% else %}
+            <td>员工</td>
+            {% endif %}
+            <td>
+                <!--更新操作，跳转到更新页面-->
+                <button type="submit" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#addEmployeeModal"
+                    onclick="edit_info('{{ employee.id }}', '{{ employee.name }}', '{{ employee.phone }}', 
+                    '{{ employee.entry_time }}', '{{ employee.department }}', '{{ employee.is_work}}',
+                    '{{ employee.permission }}')">编辑</button>
+            </td>
+            <td>
+                <!-- 删除post方式 -->
+                <button type="submit" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#deleteEmployeeModal"
+                    onclick="delete_info('{{ employee.id }}')">删除</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!--pagination-->
+<p>共计{{ pagination.total }}条数据, {{ pagination.pages }}页</p>
+<nav aria-label="Page navigation" style="text-align:right">
+    {{ pagination_nav(pagination, 'admin.employee', request.args|to_dict) }}
+</nav>
+<!-- </div> -->
+
+<!-- 模态框_员工信息（Modal） action 默认方式是add-->
+<form method="POST" action="{{ url_for('admin.employee', method='add') }}" class="form-horizontal" role="form" id="form_post"
+    style="margin: 20px;">
+    <div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">员工信息</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" role="form">
+                        <div class="form-group" hidden="hidden">
+                            <input type="text" class="form-control" name="id" id="id" hidden="hidden">
+                        </div>
+                        <div class="form-group">
+                            <label for="name" class="col-sm-3 control-label"><span style="color:red">*</span>姓名</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="name" name="name" placeholder="姓名">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label" for="phone"><span style="color:red">*</span>手机号</label>
+                            <div class="col-sm-9">
+                                <input type="text" onblur="check_phone()" class="form-control" name="phone" id="phone"
+                                    placeholder="手机号">
+                                <p class="text-danger" id="registered_p" hidden="">该手机号已经被注册过了</p>
+                                <p class="text-danger" id="length_p" hidden="">该手机号不合法, 请确认输入手机号长度</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="password" class="col-sm-3 control-label" id="label_password"><span style="color:red">*</span>密码</label>
+                            <div class="col-sm-9">
+                                <input type="password" class="form-control" name="password" id="password" placeholder="密码">
+                            </div>
+                        </div>
+                        <div id="permission" class="form-group">
+                            <label class="col-sm-3 control-label"><span style="color:red">*</span>权限</label>
+                            <div class="radio col-sm-9">
+                                <label class="radio-inline">
+                                    <input type="radio" name="permission" id="permission_1" value='1'> 员工权限
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" name="permission" id="permission_2" value='2'> 人力资源权限
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" name="permission" id="permission_3" value='3'> 管理员权限
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><span style="color:red">*</span>入职时间</label>
+                            <div class="col-sm-9">
+                                <input type="date" class="form-control" name="entry_time" id="entry_time" placeholder="入职时间">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><span style="color:red">*</span>部门</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="department" id="department" placeholder="员工所在部门">
+                            </div>
+                        </div>
+                        <div id="is_work" class="form-group">
+                            <label class="col-sm-3 control-label">是否在职</label>
+                            <div class="radio col-sm-9">
+                                <label class="radio-inline">
+                                    <input type="radio" name="is_work" value="1" id="is_work_1"> 是
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" name="is_work" value="0" id="is_work_0"> 否
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button id="check_submit" type="submit" class="btn btn-primary">提交</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+</form>
+
+<!-- 确认删除模态框 -->
+<form method="POST" action="{{ url_for('admin.employee', method='delete') }}" class="form-horizontal" style="margin: 20px;">
+    <div class="modal fade" id="deleteEmployeeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">确认删除</h4>
+                </div>
+                <div class="modal-body">
+                    <p>确认要删除这条员工信息么?</p>
+                    <input type="text" hidden="hidden" name="id" id='delete_id'>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">删除</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+</form>
+
+{% endblock %}

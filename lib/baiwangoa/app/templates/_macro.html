@@ -1,0 +1,84 @@
+<!--宏模板-->
+
+
+<!-- 单选checked
+name: radio name
+val: radio value
+content: content name
+-->
+{% macro radio_checking(info_dict, name, val, content) %}
+{% if info_dict.get(name) and info_dict.get(name) == val %}
+<input type="radio" name="{{ name }}" value="{{ val }}" checked> {{ content }}
+{% else %}
+<input type="radio" name="{{ name }}" value="{{ val }}"> {{ content }}
+{% endif %}
+{% endmacro %}
+
+
+<!--这是一个分页导航栏内容-->
+{% macro pagination_nav(pagination, endpoint, request_args) %}
+<ul class="pagination">
+
+    {% if pagination.has_prev %}
+    <!-- First page -->
+    <li>
+        {% if request_args %}
+        {% if 'page' in request_args and request_args.pop('page') %}
+        {% endif %}
+        <a href="{{ url_for(endpoint, page=1, **request_args) }}">首页</a>
+        {% else %}
+        <a href="{{ url_for(endpoint, page=1) }}">首页</a>
+        {% endif %}
+    </li>
+
+    <!-- Previous page -->
+    <li>
+        {% if request_args %}
+        {% if 'page' in request_args and request_args.pop('page') %}
+        {% endif %}
+        <a href="{{ url_for(endpoint, page=pagination.page-1, **request_args) }}">{{pagination.page-1}}</a>
+        {% else %}
+        <a href="{{ url_for(endpoint, page=pagination.page-1) }}">{{pagination.page-1}}</a>
+        {% endif %}
+    </li>
+    {% endif %}
+
+    <!-- Current page -->
+    <li class="active"><a>{{ pagination.page }}</a></li>
+
+    {% if pagination.has_next %}
+    <!-- Next page -->
+    <li>
+        {% if request_args %}
+        {% if 'page' in request_args and request_args.pop('page') %}
+        {% endif %}
+        <a href="{{ url_for(endpoint, page=pagination.page+1, **request_args) }}">{{pagination.page+1}}</a>
+        {% else %}
+        <a href="{{ url_for(endpoint, page=pagination.page+1) }}">{{pagination.page+1}}</a>
+        {% endif %}
+    </li>
+    
+    <!-- Last page -->
+    <li>
+        {% if request_args %}
+        {% if 'page' in request_args and request_args.pop('page') %}
+        {% endif %}
+        <a href="{{ url_for(endpoint, page=pagination.pages, **request_args) }}">尾页</a>
+        {% else %}
+        <a href="{{ url_for(endpoint, page=pagination.pages) }}">尾页</a>
+        {% endif %}
+    </li>
+    {% endif %}
+
+</ul>
+{% endmacro %}
+
+
+<!-- 检查一行中某列的一个对象有没有对象，如果没有就为空 -->
+{% macro check_none(string) %}
+{% if string %}
+<td>{{ string }}</td>
+{% else %}
+<td></td>
+{% endif %}
+{% endmacro %}

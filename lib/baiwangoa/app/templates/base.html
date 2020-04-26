@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>百望-资产系统平台</title>
+    <!-- 适配移动端 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 新 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <!-- Custom styles for this template -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <!--下拉菜单css-->
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='combo.select.css') }}"> -->
+    <!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+    <script src="{{ url_for('static', filename='jquery-3.1.1.min.js') }}"></script>
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+    <!--下拉菜单js-->
+    <!-- <script src="{{ url_for('static', filename='jquery.combo.select.js') }}"></script> -->
+    {% block head %}{% endblock %}
+    {% block script_head %}{% endblock %}
+</head>
+
+<body>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">资产管理系统平台</a>
+            </div>
+            <ul class="nav navbar-nav navbar-left">
+                {% block nav_li %}{% endblock %}
+            </ul>
+            {% if session.name %}
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="{{ url_for('auth.logout') }}">
+                        <span class="glyphicon glyphicon-user" aria-hidden="true"></span> {{ session.name }}</a>
+                </li>
+            </ul>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            
+            <!-- flash -->
+            <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2">                
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <ul class="list-inline">
+                    {% for message in messages %}
+                    <li>
+                        <h4 class="bg-info">{{ message }}</h4>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- content -->
+            {% block content_base %}{% endblock %}
+
+            <!-- footer -->
+            <!-- <footer>
+                <center>
+                    <span>2018</span>
+                </center>
+            </footer> -->
+        </div>
+    </div>
+
+    {% block script_body %} {% endblock %}
+</body>
+
+</html>

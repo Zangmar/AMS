@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content_base %}
+<header>
+    <center>
+        <h1>资产管理系统</h1>
+    </center>
+</header>
+
+<style>
+    .form-signin {
+        max-width: 330px;
+        padding: 15px;
+        margin: 0 auto;
+    }
+</style>
+
+
+<!-- <div class="post-article"> -->
+<form class="form-signin" action="{{ url_for('auth.login') }}" method="POST">
+    <div class="form-group">
+        <label>手机号</label>
+        <input type="phone" class="form-control" name="phone" placeholder="手机号">
+    </div>
+    <div class="form-group">
+        <label>密码</label>
+        <input type="password" class="form-control" name="password" placeholder="密码">
+    </div>
+    <button type="submit" class="btn btn-success">登录</button>
+</form>
+
+<!-- </div> -->
+
+{% endblock %}

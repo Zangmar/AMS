@@ -1,0 +1,177 @@
+{% extends 'admin/base.html' %}
+{% from "_macro.html" import pagination_nav %}
+
+{% block head %}
+<script src="{{ url_for('static', filename='admin/apply/post_form.js') }}"></script>
+{% endblock %}
+
+{% block nav_li %}
+<li><a href="{{ url_for('admin.main') }}">管理员主页 --></a></li>
+<li class="active"><a href="#">资产申请</a></li>
+{% endblock %}
+
+{%block nav_son_form %}
+<form class="navbar-form navbar-left" action="{{ url_for('admin.apply') }}" method="GET">
+    <div class="input-group">
+        <div class="input-group-btn">
+            <select class="form-control" id='filter_name'>
+                <option value="employee_name">员工姓名</option>
+            </select>
+        </div>
+        <input type="text" name='employee_name' class="form-control" placeholder="搜索">
+    </div>
+    <button type="submit" class="btn btn-default">确定</button>
+</form>
+{% endblock %}
+
+{%block nav_son_button2 %}
+<a href="{{ url_for('admin.apply') }}"><button class="btn btn-default">全部</button></a>
+<a href="{{ url_for('admin.apply', status='W') }}"><button class="btn btn-default">未受理</button></a>
+<a href="{{ url_for('admin.apply', status='O') }}"><button class="btn btn-default">已完成</button></a>
+{% endblock %}
+
+
+{% block content %}
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>序号</th>
+            <th>申请时间</th>
+            <th>申请员工</th>
+            <th>申请员工部门</th>
+            <th>申请员工电话</th>
+            <th>申请设备</th>
+            <th>申请状态</th>
+            <th></th>
+            <!--handle-->
+            <th></th>
+            <!--delete-->
+        </tr>
+    </thead>
+    <tbody>
+        {% for merge in pagination.renew_items %}
+        <tr>
+            <th scope="row">{{ (pagination.page-1)*10+loop.index }}</th>
+            <td>{{ merge.apply.apply_time }}</td>
+            <td hidden="hidden">{{ merge.apply.employee.id }}</td>
+            <td>{{ merge.employee.name }}</td>
+            <td>{{ merge.employee.department }}</td>
+            <td>{{ merge.employee.phone }}</td>
+            <td hidden="hidden">{{ merge.assets_dict.id }}</td>
+            <td>{{ merge.assets_dict.name }}</td>
+            {% if merge.apply.status == 'W' %}
+            <td class="text-danger">未受理</td>
+            {% elif merge.apply.status == 'S' %}
+            <td>受理中</td>
+            {% elif merge.apply.status == 'O' %}
+            <td class="text-success">已完成</td>
+            {% endif %}
+            <td>
+                {% if merge.apply.status == 'W' %}
+                <button data-toggle="modal" data-target="#handleApply" type="submit" class="btn btn-primary btn-xs"
+                    onclick="edit_info('{{ merge.apply.id }}', '{{ merge.assets_dict.id }}', '{{ merge.assets_dict.name }}', 
+                    '{{ merge.employee.id }}', '{{ merge.employee.name }}', '{{ merge.employee.department }}')">处理</button>
+                {% endif %}
+            </td>
+            <td>
+                <!-- 删除post方式 -->
+                <button type="submit" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#deleteApplyModal"
+                    onclick="delete_info('{{ merge.apply.id }}')">删除</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!--pagination-->
+<p>共计{{ pagination.total }}条数据, {{ pagination.pages }}页</p>
+<nav aria-label="Page navigation" style="text-align:right">
+    {{ pagination_nav(pagination, 'admin.apply', request.args|to_dict) }}
+</nav>
+
+<!-- 模态框_员工信息（Modal） action 默认方式是add-->
+<form method="POST" action="{{ url_for('admin.apply', method='handle') }}" class="form-horizontal" role="form" style="margin: 20px;">
+    <div class="modal fade" id="handleApply" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">申请处理</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" role="form">
+                        <!--apply_id-->
+                        <div class="form-group" hidden="hidden">
+                            <input type="text" class="form-control" name="apply_id" id="apply_id" hidden="hidden">
+                        </div>
+                        <!--assets_dict_name-->
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">设备名</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="assets_dict_name" id="assets_dict_name"
+                                    disabled>
+                            </div>
+                        </div>
+                        <!--assets_id-->
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><span style="color:red">*</span>选择设备</label>
+                            <div class="col-sm-9">
+                                <select class="form-control" name="assets_info_id" id="assets_info_id">
+                                    <!--option-->
+                                </select>
+                            </div>
+                        </div>
+                        <!--employee_id-->
+                        <div class="form-group" hidden="hidden">
+                            <input type="text" class="form-control" name="employee_id" id="employee_id" hidden="hidden">
+                        </div>
+                        <!--employee_name-->
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">员工名</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="employee_name" id="employee_name"
+                                    disabled>
+                            </div>
+                        </div>
+                        <!--employee_department-->
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">员工部门</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="employee_department" id="employee_department"
+                                    disabled>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button id="registered_submit" type="submit" class="btn btn-primary">提交</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+</form>
+
+<!-- 确认删除模态框 -->
+<form method="POST" action="{{ url_for('admin.apply', method='delete') }}" class="form-horizontal" style="margin: 20px;">
+        <div class="modal fade" id="deleteApplyModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">确认删除</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>确认要删除这条申请信息么?</p>
+                        <input type="text" hidden="hidden" name="id" id='delete_id'>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">删除</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal -->
+        </div>
+    </form>    
+
+{% endblock %}

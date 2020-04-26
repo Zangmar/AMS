@@ -1,0 +1,313 @@
+{% extends 'admin/base.html' %}
+{% from "_macro.html" import pagination_nav %}
+
+{% block head %}
+<script src="{{ url_for('static', filename='admin/device/post_form.js') }}"></script>
+<!-- 通用js -->
+<script src="{{ url_for('static', filename='utils.js') }}"></script>
+{% endblock %}
+
+{% block nav_li %}
+<li><a href="{{ url_for('admin.main') }}">管理员主页 --></a></li>
+<li class="active"><a href="#">资产列表</a></li>
+{% endblock %}
+
+{%block nav_son_form %}
+<form class="navbar-form navbar-left" action="{{ url_for('admin.device') }}" method="GET">
+    <div class="input-group">
+        <div class="input-group-btn">
+            <select class="form-control" onclick="change_args_name()" id='filter_name'>
+                <option value="employee_name">员工姓名</option>
+                <option value="code">设备编码</option>
+                <option value="asset_name">设备名称</option>
+                <option value="serial_num">序列号</option>
+            </select>
+        </div>
+        <input type="text" id='filter_value' name="employee_name" class="form-control" placeholder="搜索">
+    </div>
+    <button type="submit" class="btn btn-default">确定</button>
+</form>
+{% endblock %}
+
+{%block nav_son_button %}
+<button class="btn btn-default" onclick="query_types_name()" data-toggle="modal" data-target="#addDeviceModal">添加设备</button>
+<button class="btn btn-default" data-toggle="modal" data-target="#uploadModal">批量添加设备</button>
+{% endblock %}
+
+{%block nav_son_button2 %}
+<a href="{{ url_for('admin.device') }}"><button class="btn btn-default">全部</button></a>
+<a href="{{ url_for('admin.device', status='1') }}"><button class="btn btn-default">入库</button></a>
+<a href="{{ url_for('admin.device', status='2') }}"><button class="btn btn-default">出库</button></a>
+<a href="{{ url_for('admin.device', status='3') }}"><button class="btn btn-default">维修中</button></a>
+{% endblock %}
+
+{% block content %}
+<!-- <div id="1" class="post-article"> -->
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>序号</th>
+            <th>设备编码</th>
+            <th>设备名</th>
+            <th>序列号</th>
+            <th>入库时间</th>
+            <th>库房位置</th>
+            <th>设备状态</th>
+            <th>使用人及部门</th>
+            <th>上一个使用人及部门</th>
+            <th></th>
+            <!--edit-->
+            <th></th>
+            <!--delete-->
+        </tr>
+    </thead>
+    <tbody>
+        {% for merge in pagination.renew_items %}
+        <tr>
+            <th scope="row">{{ (pagination.page-1)*10+loop.index }}</th>
+            <td>{{ merge.device.code }}</td>
+            <td>{{ merge.device.assets_dict.name }}</td>
+            <td>{{ merge.device.sn }}</td>
+            <td>{{ merge.device.storage_time }}</td>
+            <td>{{ merge.device.location }}</td>
+            {% if merge.device.status == '1' %}
+            <td class="text-success">入库</td>
+            {% elif merge.device.status == '2' %}
+            <td class="text-danger">出库</td>
+            {% elif merge.device.status == '3' %}
+            <td class="text-warning">维修中</td>
+            {% endif %}
+            {% if merge.employee %}
+            <td>{{ merge.employee.name }}; {{ merge.employee.department }}</td>
+            {% else %}
+            <td></td>
+            {% endif %}
+            {% if merge.device.last_employee_name %}
+            <td>{{ merge.device.last_employee_name }}; {{ merge.device.last_employee_department }}</td>
+            {% else %}
+            <td></td>
+            {% endif %}
+            <td>
+                <!--更新操作，跳转到更新页面-->
+                <button data-toggle="modal" data-target="#updateDeviceModal" type="submit" class="btn btn-primary btn-xs"
+                    onclick="edit_info('{{ merge.device.id }}', '{{ merge.device.code }}', '{{ merge.device.sn }}', '{{ merge.device.location }}',
+                        '{{ merge.device.status }}', '{{ merge.employee.id }}', '{{ merge.employee.name }}', 
+                        '{{ merge.employee.deparmtent }}', '{{ merge.employee.phone }}', '{{ merge.device.specifications }}')">编辑</button>
+            </td>
+            <td>
+                <!-- 删除post方式 -->
+                <button type="submit" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#deleteDeviceModal"
+                    onclick="delete_info('{{ merge.device.id }}')">删除</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!--pagination-->
+<p>共计{{ pagination.total }}条数据, {{ pagination.pages }}页</p>
+<nav aria-label="Page navigation" style="text-align:right">
+    {{ pagination_nav(pagination, 'admin.device', request.args|to_dict) }}
+</nav>
+<!-- </div> -->
+
+<!-- 模态框_员工信息（Modal） 添加-->
+<form method="POST" action="{{ url_for('admin.device', method='add') }}" class="form-horizontal" id="add_post" style="margin: 20px;">
+    <div class="modal fade" id="addDeviceModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">设备信息</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><span style="color:red">*</span>选择设备类型</label>
+                            <div class="col-sm-9">
+                                <select onclick="query_assets_name()" class="form-control" id="types_select">
+                                    <!-- <option>---</option>
+                                    <option>笔记本电脑</option> -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><span style="color:red">*</span>选择设备</label>
+                            <div class="col-sm-9">
+                                <select class="form-control" name="assets_dict_string" id="assets_select">
+                                    <!--option-->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><span style="color:red">*</span>设备编码</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" onblur="check_code()" name="last_code" id="last_code"
+                                    placeholder="设备编号">
+                                <p class="text-danger" id="registered_p" hidden="">该编码已经存在</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><span style="color:red">*</span>序列号</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="sn" placeholder="序列号">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><span style="color:red">*</span>库房位置</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="location" placeholder="库房位置">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">详细信息</label>
+                            <div class="col-sm-9">
+                                <textarea rows="3" class="form-control" name="specifications" placeholder="详细信息可以为空"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button id="registered_submit" type="submit" class="btn btn-primary">提交</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+</form>
+
+<!--更新 模态框-->
+<form method="POST" action="{{ url_for('admin.device', method='update') }}" class="form-horizontal" id="update_post"
+    style="margin: 20px;">
+    <div class="modal fade" id="updateDeviceModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">设备信息</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group" hidden="hidden">
+                            <input type="text" class="form-control" name="id" id="id" hidden="hidden">
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><span style="color:red">*</span>设备编码</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" onblur="check_code_update()" name="code" id="code"
+                                    placeholder="设备编号">
+                                <p class="text-danger" id="registered_p_update" hidden="">该编码已经存在</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><span style="color:red">*</span>序列号</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="sn" id="sn" placeholder="序列号">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><span style="color:red">*</span>库房位置</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="location" id="location" placeholder="库房位置">
+                            </div>
+                        </div>
+                        <div id="is_work" class="form-group">
+                            <label class="col-sm-3 control-label">是否需要维修</label>
+                            <div class="radio col-sm-9">
+                                <label class="radio-inline">
+                                    <input type="radio" name="status" value="3" id="status_repair"> 是
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" name="status" value="" id="status_none"> 否
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">使用人选择</label>
+                            <div class="col-sm-3">
+                                <!--这个input是不做为form进行post的-->
+                                <input type="text" onchange="query_employee_info()" class="form-control" id="employee"
+                                    placeholder="使用人">
+                            </div>
+                            <div class="col-sm-6">
+                                <select name='employee_id' class="form-control" id="employee_select">
+                                    <!--option-->
+                                </select>
+                            </div>
+                        </div>
+                        <!--使用人选择test1-->
+                        <!-- <div class="form-group">
+                            <label class="col-sm-3 control-label">使用人选择</label>
+                            <div class="col-sm-9">
+                                <select class="dowebok" name='employee_id' id="employee_select">
+                                    <option value=""></option>
+                                </select>
+                            </div>
+                        </div> -->
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">详细信息</label>
+                            <div class="col-sm-9">
+                                <textarea rows="3" class="form-control" name="specifications" id="specifications"
+                                    placeholder="详细信息可以为空"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button id="registered_submit_update" type="submit" class="btn btn-primary">提交</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+</form>
+
+<!-- 确认删除模态框 -->
+<form method="POST" action="{{ url_for('admin.device', method='delete') }}" class="form-horizontal" style="margin: 20px;">
+    <div class="modal fade" id="deleteDeviceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">确认删除</h4>
+                </div>
+                <div class="modal-body">
+                    <p>确认要删除这条设备信息么?</p>
+                    <input type="text" hidden="hidden" name="id" id='delete_id'>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">删除</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+</form>
+
+<!-- 上传文件模态框 -->
+<form method="POST" action="{{ url_for('admin.device', method='add_all') }}" class="form-horizontal" style="margin: 20px;">
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">上传文件</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <input type="file" name="file" id='file_id' style="padding: 0px 0px 0px 15px;">
+                    </div>
+                    <p id="upload_p_id">请上传文件</p>
+                    <input type='text' id="upload_filename_id" name='filename' hidden='hidden'>
+                    <buttion type='button' id="upload_button_id" class="btn btn-primary" onclick="upload_file()">上传</buttion>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="submit" id="upload_submit_id" class="btn btn-primary" disabled>提交</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+</form>
+
+{% endblock %}

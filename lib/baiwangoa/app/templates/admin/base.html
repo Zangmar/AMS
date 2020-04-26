@@ -1,0 +1,34 @@
+<!--admin模板-->
+
+{% extends 'base_main.html' %}
+
+{% block sidebar %}
+<ul class="nav nav-sidebar">
+    <li><a href="{{ url_for('admin.main') }}"><span class="glyphicon glyphicon-th"></span>
+            <font size="3"> 管理员主页</font>
+        </a></li>
+    <li><a href="{{ url_for('admin.main') }}" style="margin:0px 0px 0px 16px;">管理员统计</a></li>
+    {% block sidebar_main_li %}{% endblock %}
+</ul>
+<ul class="nav nav-sidebar">
+    <li><a href="{{ url_for('admin.employee') }}"><span class="glyphicon glyphicon-user"></span>
+            <font size="3"> 员工管理</font>
+        </a></li>
+    <li><a href="{{ url_for('admin.employee') }}" style="margin:0px 0px 0px 16px;">员工列表</a></li>
+    {% block sidebar_employee_li %}{% endblock %}
+</ul>
+<ul class="nav nav-sidebar">
+    <li><a href="{{ url_for('admin.device') }}"><span class="glyphicon glyphicon-briefcase"></span>
+            <font size="3"> 资产管理</font>
+        </a></li>
+    <li><a href="{{ url_for('admin.device') }}" style="margin:0px 0px 0px 16px;">资产列表</a></li>
+    {% block sidebar_device_li %}{% endblock %}
+</ul>
+<ul class="nav nav-sidebar">
+    <li><a href="{{ url_for('admin.apply') }}" ><span class="glyphicon glyphicon-pencil"></span>
+            <font size="3"> 申请管理</font>
+        </a></li>
+    <li><a href="{{ url_for('admin.apply') }}" style="margin:0px 0px 0px 16px;">资产申请</a></li>
+    {% block sidebar_apply_li %}{% endblock %}
+</ul>
+{% endblock %}
