@@ -8,11 +8,11 @@ log_level: DEBUG
 DB_LINK:
   DB_TYPE: mysql #mysql or sqlite
   DB_PATH: development.sqlite
-  Host: 10.100.2.36
-  User: root
-  Passwd: 123
+  Host: 
+  User: 
+  Passwd: 
   Port: 3306
-  DB_Name: it_support
+  DB_Name: 
 
 
 # Upload folder
